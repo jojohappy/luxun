@@ -52,9 +52,14 @@ func (s *Stream) start() {
 		for _, op := range s.ops {
 			op.Exec()
 		}
-		err := <-s.sink.Exec()
-		if nil != err {
-			fmt.Printf("failed to sink %s\n", err.Error())
+		r := s.sink.Exec()
+		for {
+			select {
+			case err := <-r:
+				if nil != err {
+					fmt.Printf("failed to sink %s\n", err.Error())
+				}
+			}
 		}
 	}()
 }

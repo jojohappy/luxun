@@ -39,6 +39,7 @@ func (s *Sink) Exec() <-chan error {
 					result <- err
 				}
 			case <-s.stopCh:
+				close(result)
 				return
 			}
 		}
