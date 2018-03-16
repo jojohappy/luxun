@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	events_v1beta1 "k8s.io/api/events/v1beta1"
+	"github.com/luxun/pkg/model"
+	"github.com/luxun/pkg/stream"
+
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -29,7 +32,7 @@ func New(client kubernetes.Interface) cache.Controller {
 func newEventController(client kubernetes.Interface) *EventController {
 	f := informers.NewSharedInformerFactory(client, DefaultResyncPeriod)
 	ec := &EventController{
-		informer: f.Events().V1beta1().Events().Informer(),
+		informer: f.Core().V1().Events().Informer(),
 		queue:    workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		client:   client,
 	}
@@ -74,7 +77,6 @@ func (ec *EventController) nextWork() bool {
 		return false
 	}
 	defer ec.queue.Done(key)
-	fmt.Printf("handle event by key: %s\n", key)
 	err := ec.processItem(key.(string))
 	if err == nil {
 		ec.queue.Forget(key)
@@ -93,35 +95,29 @@ func (ec *EventController) processItem(key string) error {
 	if nil != err {
 		return fmt.Errorf("error fetching object with key %s from store: %v", key, err)
 	}
-	ev, ok := obj.(*events_v1beta1.Event)
+	ev, ok := obj.(*core_v1.Event)
 	if ok {
-		fmt.Printf("event is %v\n", ev)
+		stream.Process(model.ConvertEvent(ev))
 	}
 	return nil
 }
 
-// OnAdd calls AddFunc if it's not nil.
 func (ec *EventController) OnAdd(obj interface{}) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-	fmt.Printf("Processing add to event: %s\n", key)
 	if err == nil {
 		ec.queue.Add(key)
 	}
 }
 
-// OnUpdate calls UpdateFunc if it's not nil.
 func (ec *EventController) OnUpdate(oldObj, newObj interface{}) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(newObj)
-	fmt.Printf("Processing update to event: %s\n", key)
 	if err == nil {
 		ec.queue.Add(key)
 	}
 }
 
-// OnDelete calls DeleteFunc if it's not nil.
 func (ec *EventController) OnDelete(obj interface{}) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-	fmt.Printf("Processing delete to event: %s\n", key)
 	if err == nil {
 		ec.queue.Add(key)
 	}
