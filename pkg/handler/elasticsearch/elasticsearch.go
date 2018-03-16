@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/luxun/pkg/util"
+
 	elastic "gopkg.in/olivere/elastic.v5"
 )
 
@@ -92,7 +94,7 @@ func (es *ElasticClient) runQueueRoutine() {
 		select {
 		case ev, ok := <-es.q:
 			if ok {
-				v := reflect.ValueOf(ev)
+				v := util.ParseValuePointers(reflect.ValueOf(ev))
 				if v.Kind() == reflect.Struct {
 					tv := v.FieldByName("Time")
 					if tv.IsValid() {
