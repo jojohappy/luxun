@@ -7,6 +7,12 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 )
 
+const (
+	ContainerStatusWaiting    = "Waiting"
+	ContainerStatusTerminated = "Terminated"
+	ContainerStatusRunning    = "Running"
+)
+
 type Event struct {
 	Time              time.Time         `json:"time"`
 	Name              string            `json:"name,omitempty"`
@@ -24,6 +30,24 @@ type Event struct {
 	Action            string            `json:"action,omitempty"`
 	EventTime         time.Time         `json:"eventTime"`
 	Env               string            `json:"env"`
+	PodCondition      PodCondition      `json:"podCondition"`
+	ContainerStatus   []ContainerStatus `json:"containerStatus"`
+}
+
+type PodCondition struct {
+	Reason  string `json:"reason,omitempty"`
+	Message string `json:"message,omitempty"`
+	Type    string `json:"type,omitempty"`
+	Status  string `json:"status,omitempty"`
+}
+
+type ContainerStatus struct {
+	Name     string `json:"name,omitempty"`
+	State    string `json:"state,omitempty"`
+	ExitCode int32  `json:"exitCode,omitempty"`
+	Signal   int32  `json:"signal,omitempty"`
+	Reason   string `json:"reason,omitempty"`
+	Message  string `json:"message,omitempty"`
 }
 
 func ConvertEvent(ev *core_v1.Event) *Event {
@@ -49,4 +73,56 @@ func ConvertEvent(ev *core_v1.Event) *Event {
 		EventTime:         ev.EventTime.Time,
 		Env:               env,
 	}
+}
+
+func ConvertPodEvent(po *core_v1.Pod) *Event {
+	env := os.Getenv("KUBEENV")
+	if "" == env {
+		env = "unknown"
+	}
+
+	ev := &Event{
+		Time:              time.Now(),
+		Name:              po.ObjectMeta.Name,
+		Namespace:         po.ObjectMeta.Namespace,
+		CreationTimestamp: po.ObjectMeta.CreationTimestamp.Time,
+		Labels:            po.ObjectMeta.Labels,
+		Annotations:       po.ObjectMeta.Annotations,
+		Kind:              "Pod",
+		Env:               env,
+	}
+
+	for _, condition := range po.Status.Conditions {
+		if condition.Type == core_v1.PodReady {
+			ev.PodCondition = PodCondition{
+				Status:  string(condition.Status),
+				Type:    string(condition.Type),
+				Reason:  condition.Reason,
+				Message: condition.Message,
+			}
+			break
+		}
+	}
+
+	for _, s := range po.Status.ContainerStatuses {
+		cs := ContainerStatus{
+			Name: s.Name,
+		}
+		if nil != s.State.Waiting {
+			cs.State = ContainerStatusWaiting
+			cs.Reason = s.State.Waiting.Reason
+			cs.Message = s.State.Waiting.Message
+		} else if nil != s.State.Running {
+			cs.State = ContainerStatusRunning
+		} else if nil != s.State.Terminated {
+			cs.State = ContainerStatusTerminated
+			cs.ExitCode = s.State.Terminated.ExitCode
+			cs.Signal = s.State.Terminated.Signal
+			cs.Reason = s.State.Terminated.Reason
+			cs.Message = s.State.Terminated.Message
+		}
+		ev.ContainerStatus = append(ev.ContainerStatus, cs)
+	}
+
+	return ev
 }
