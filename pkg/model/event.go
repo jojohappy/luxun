@@ -14,24 +14,24 @@ const (
 )
 
 type Event struct {
-	Time              time.Time         `json:"time"`
-	Name              string            `json:"name,omitempty"`
-	Namespace         string            `json:"namespace,omitempty"`
-	CreationTimestamp time.Time         `json:"creationTimestamp,omitempty"`
-	Labels            map[string]string `json:"labels,omitempty"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
-	Kind              string            `json:"kind,omitempty"`
-	Reason            string            `json:"reason,omitempty"`
-	Message           string            `json:"message,omitempty"`
-	FirstTimestamp    time.Time         `json:"firstTimestamp,omitempty"`
-	LastTimestamp     time.Time         `json:"lastTimestamp,omitempty"`
-	Count             int32             `json:"count,omitempty"`
-	Type              string            `json:"type,omitempty"`
-	Action            string            `json:"action,omitempty"`
-	EventTime         time.Time         `json:"eventTime"`
-	Env               string            `json:"env"`
-	PodCondition      PodCondition      `json:"podCondition"`
-	ContainerStatus   []ContainerStatus `json:"containerStatus"`
+	Time              time.Time                  `json:"time"`
+	Name              string                     `json:"name,omitempty"`
+	Namespace         string                     `json:"namespace,omitempty"`
+	CreationTimestamp time.Time                  `json:"creationTimestamp,omitempty"`
+	Labels            map[string]string          `json:"labels,omitempty"`
+	Annotations       map[string]string          `json:"annotations,omitempty"`
+	Kind              string                     `json:"kind,omitempty"`
+	Reason            string                     `json:"reason,omitempty"`
+	Message           string                     `json:"message,omitempty"`
+	FirstTimestamp    time.Time                  `json:"firstTimestamp,omitempty"`
+	LastTimestamp     time.Time                  `json:"lastTimestamp,omitempty"`
+	Count             int32                      `json:"count,omitempty"`
+	Type              string                     `json:"type,omitempty"`
+	Action            string                     `json:"action,omitempty"`
+	EventTime         time.Time                  `json:"eventTime"`
+	Env               string                     `json:"env"`
+	PodCondition      PodCondition               `json:"podCondition"`
+	ContainerStatus   map[string]ContainerStatus `json:"containerStatus"`
 }
 
 type PodCondition struct {
@@ -90,6 +90,7 @@ func ConvertPodEvent(po *core_v1.Pod) *Event {
 		Annotations:       po.ObjectMeta.Annotations,
 		Kind:              "Pod",
 		Env:               env,
+		ContainerStatus:   make(map[string]ContainerStatus),
 	}
 
 	for _, condition := range po.Status.Conditions {
@@ -121,7 +122,7 @@ func ConvertPodEvent(po *core_v1.Pod) *Event {
 			cs.Reason = s.State.Terminated.Reason
 			cs.Message = s.State.Terminated.Message
 		}
-		ev.ContainerStatus = append(ev.ContainerStatus, cs)
+		ev.ContainerStatus[s.Name] = cs
 	}
 
 	return ev
