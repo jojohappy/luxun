@@ -92,7 +92,7 @@ func ConvertPodEvent(po *core_v1.Pod) *Event {
 
 func ConvertPodDeleteEvent(po *core_v1.Pod) *Event {
 	ev := ConvertPodBasicEvent(po)
-	ev.Action = "Pod"
+	ev.Action = "Delete"
 	return ev
 }
 
