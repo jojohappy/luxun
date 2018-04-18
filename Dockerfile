@@ -1,4 +1,8 @@
 FROM alpine:3.6
 
-COPY bin/luxun /
-CMD ["/luxun"]
+MAINTAINER Michael Dai "sarahdj0917@gmail.com"
+
+ADD bin/luxun /
+RUN chmod a+x /luxun
+
+ENTRYPOINT ["/luxun"]

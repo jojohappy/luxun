@@ -48,7 +48,7 @@ fmt-check:
 
 .PHONY: $(TARGET)
 $(TARGET): $(GOFILES)
-	CGO_ENABLED=0 go build -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -a -o bin/luxun github.com/luxun
+	go build -o bin/luxun main.go
 
 clean:
 	@rm -rf ./bin
