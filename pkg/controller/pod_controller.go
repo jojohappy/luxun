@@ -63,13 +63,20 @@ func (pc *PodController) OnAdd(obj interface{}) {}
 func (pc *PodController) OnUpdate(_, newObj interface{}) {
 	pod, err := convertToPod(newObj)
 	if err != nil {
-		fmt.Println("converting to Pod object failed", "err", err)
+		fmt.Println("converting to Pod object failed in OnUpdate", "err", err)
 		return
 	}
 	stream.Process(model.ConvertPodEvent(pod))
 }
 
-func (pc *PodController) OnDelete(obj interface{}) {}
+func (pc *PodController) OnDelete(obj interface{}) {
+	pod, err := convertToPod(obj)
+	if err != nil {
+		fmt.Println("converting to Pod object failed in OnDelete", "err", err)
+		return
+	}
+	stream.Process(model.ConvertPodDeleteEvent(pod))
+}
 
 func convertToPod(o interface{}) (*core_v1.Pod, error) {
 	pod, ok := o.(*core_v1.Pod)

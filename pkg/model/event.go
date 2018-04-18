@@ -126,3 +126,22 @@ func ConvertPodEvent(po *core_v1.Pod) *Event {
 
 	return ev
 }
+
+func ConvertPodDeleteEvent(po *core_v1.Pod) *Event {
+	env := os.Getenv("KUBEENV")
+	if "" == env {
+		env = "unknown"
+	}
+
+	return &Event{
+		Time:              time.Now(),
+		Name:              po.ObjectMeta.Name,
+		Namespace:         po.ObjectMeta.Namespace,
+		CreationTimestamp: po.ObjectMeta.CreationTimestamp.Time,
+		Labels:            po.ObjectMeta.Labels,
+		Annotations:       po.ObjectMeta.Annotations,
+		Kind:              "Pod",
+		Env:               env,
+		Action:            "Delete",
+	}
+}
