@@ -3,7 +3,7 @@ package stream
 import (
 	"fmt"
 
-	"github.com/luxun/pkg/model"
+	"github.com/jojohappy/luxun/pkg/model"
 )
 
 type Stream struct {

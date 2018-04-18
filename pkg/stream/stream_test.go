@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/luxun/pkg/model"
+	"github.com/jojohappy/luxun/pkg/model"
 )
 
 var count int

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/luxun/pkg/controller"
-	"github.com/luxun/pkg/stream"
+	"github.com/jojohappy/luxun/pkg/controller"
+	"github.com/jojohappy/luxun/pkg/stream"
 )
 
 func main() {

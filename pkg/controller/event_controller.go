@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/luxun/pkg/model"
-	"github.com/luxun/pkg/stream"
+	"github.com/jojohappy/luxun/pkg/model"
+	"github.com/jojohappy/luxun/pkg/stream"
 
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
