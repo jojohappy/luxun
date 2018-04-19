@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/luxun/pkg/util"
+	"github.com/jojohappy/luxun/pkg/util"
 
 	elastic "gopkg.in/olivere/elastic.v5"
 )

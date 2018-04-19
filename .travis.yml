@@ -1,0 +1,27 @@
+language: go
+
+go:
+  - '1.10'
+
+services:
+  - docker
+
+env:
+  global:
+  - secure: aVAjA5EOXzWdasOpBGKgchJK0bwCYpshgFvXMxgYaksYMjLnEkfh6T0GoL/ZtPPatUhsiKl+tUvxCRMeDqOrs6SLL6mHZ6uqqwiyMsIrkKNNMSCKVZmE0/ElfhXtZTgJxPBG7HTJmNZFcV95dnOMq+kpF92AubJxRMTX95d+eHNU5q6QL5gXfxD+BCtSs6rLl92megTcW1AMV0D/i53ENuv0kNaYptMder89DmFGzPeIrLHxhpdel1G1RGDwpqBZAJwbv/6IV0v31jQwHlu3AvgssMZSDePqoWY8ReAMSU53RlCSafskiUkHClRl45WhFjbQZdOgq+xvgudUCB9HTafrXFHKPE/APD8VMLreMHjtZG9oTg6mEuvRKBLCtKlexJb0Oq2xYGXp0l8GxeWKzNT0igeTXV2Dj4rDGUubwG05on3LaV32soLbSM0Ll8LFx8tZOndPdznf+MbU0p+0mozbIOtVQfCXHKS1ZSX5iHjENQn+8Bn33to6ubxuei/Wib7hTsE87UrT0+thJfdIG23rf7ooVLuA27XHgXUp3hyHdrjZqfSVMl0aPCM+mSQnQVhH+yHETwxt8Cqh0zu+CC6feJSligjYfCoH8XoEBUolYX2CQn7OLawWUGhBfobW29v3HjfKG0cRaI3uKF0rcCWnBcIcGevHKGEWOh1/YD0=
+  - secure: VTUQ11/94PfFYOBAdpdNNagH2jC4IqOfkM5utBYXXkY129EkrWJyKu2uYHdHolm4vsORxXTks7ReT/mRiebG7/CAntoNkqRhcwN1lg7hwkOlHcYybEqv7hPOLEJS3lTpxtiFp4wU3g4nE1dl+bf8ogDfmJA1va8iOSMn1BoKKCOuRlvG0qAIHsAMEhEjdjcQCr1khLiTq2536z7spAbrKKFEatxkfsQusTAx0shwWCOPDPIg38S4m9lvCn+WJdDDO9alMbasspG/L6aYx9tORlPkeV17m1kI2VtgO63Ovl8yT3AaKSTmLwhPlnBMdmoCKrVwa1IQj3mNuEoBmcH/DWIOE1klewABurf9MHCWBivx15X0S6iD5H3M2fnEeH8DQrEHeidJ0OhwTdIKiPgOc0h0KlkwkeV+FuhTr7Nt98X6JD9a5dOzkMmf5YjHmhgHlZ7lF/2yRt0MYPvHWzKUa8cuRwiJhPXeMD2S2uappq4OQuIwE2Rk2/czYmYlTJ95bKOPkePtl2Q2IgkYwwYiS3PqbXFSJ92HqPR1seE3yq0thHBaKFkLDa4VeroMzIJJ4lDNFTxyUAdC6H0Zqu+P0D98Ifg/B2ZoPqa4Nw89dKwsyl99xii9zH6dbqyyPLHAy7jYyBxY2qFrQIaxjAOcL57Byeh6qSZUeqLBRe88NwI=
+  - secure: qnPOUiOP+k0FlZrTkSwCRB01KkYmpLxxSItsTQEP0nylCBL1O5p9uk/uwQ/OS6uvJsRkbIgwy8fThlcEL35MhJlXiDseV5oAe0pIFcHHdysDn7OtR5gGFEIj8zqrZ+zQ2p1h8NP0DzanHtbbp4JvKl4WuDVzy6h2Jxaydkeifjl26/Ss0S2bz8+gP0ej7tWeVq736g9WzbRFYdNtKy8IaBH3wpUiljuNI1fW2Bvb/VFb/xncWzWnrR/CxWgONl4fHtApNHudxLhZc05hzg43MUxQgQk9lw3TFqa5yB1DhiEe12tnQ0yGoAO6RXHfbyHDkxCbT//rYoJymDIz1WPooFawoFHkAGi5LIPmtYO7NApQNjFUhVPmsQ63nkc8LMUS6g7uqHJgFflPxGDvi0hlsQlQZWvVBCvfhsX/t9PyB949Rkf5vXLSENXvbIi3jfydRsOGgnk8jie+bPKvHIG2nU4xj9eGUZS5B0sKcw5CcY89zTCH0eGsA5dC29/GxCTAubiM94+YcDe112GoNtuyWYlnH6/6P+MGIrG++mCt8D9n7HT6h26bvJjNJK8nKiVPZhHKuqo6yqN9HnAbSJ62IEalihVGhp/ac+1M3unL5bQzrl8NYvtKIhfLV4OmAZqzOE1XmEdBz1svECHVjTp30lI7fR+3FKdyL/FVoymPi4Y=
+  - GIMME_OS=linux GIMME_ARCH=amd64
+
+install:
+  - make install
+
+script:
+  - make test
+  - make
+
+after_success:
+  - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
+  - docker build -t jojohappy/luxun:$TAG .
+  - docker push jojohappy/luxun:$TAG
