@@ -18,7 +18,7 @@ install:
 
 script:
   - make test
-  - make
+  - GOOS=linux GOARCH=amd64 make
 
 after_success:
   - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
