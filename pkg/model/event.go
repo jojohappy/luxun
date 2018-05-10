@@ -31,7 +31,7 @@ type Event struct {
 	Env               string                  `json:"env"`
 	PodCondition      PodCondition            `json:"podCondition,omitempty"`
 	ContainerStatus   map[int]ContainerStatus `json:"containerStatus,omitempty"`
-	PodStatus         string                  `json:"podStatus,omitempty`
+	PodStatus         string                  `json:"podStatus,omitempty"`
 }
 
 func ConvertEvent(ev *core_v1.Event) *Event {
