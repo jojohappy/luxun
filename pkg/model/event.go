@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	core_v1 "k8s.io/api/core/v1"
@@ -28,8 +29,9 @@ type Event struct {
 	Action            string                  `json:"action,omitempty"`
 	EventTime         time.Time               `json:"eventTime"`
 	Env               string                  `json:"env"`
-	PodCondition      PodCondition            `json:"podCondition"`
-	ContainerStatus   map[int]ContainerStatus `json:"containerStatus"`
+	PodCondition      PodCondition            `json:"podCondition,omitempty"`
+	ContainerStatus   map[int]ContainerStatus `json:"containerStatus,omitempty"`
+	PodStatus         string                  `json:"podStatus,omitempty`
 }
 
 func ConvertEvent(ev *core_v1.Event) *Event {
@@ -67,26 +69,79 @@ func ConvertPodEvent(po *core_v1.Pod) *Event {
 		}
 	}
 
-	for i, s := range po.Status.ContainerStatuses {
-		cs := ContainerStatus{
-			Name: s.Name,
-		}
-		if nil != s.State.Waiting {
-			cs.State = ContainerStatusWaiting
-			cs.Reason = s.State.Waiting.Reason
-			cs.Message = s.State.Waiting.Message
-		} else if nil != s.State.Running {
-			cs.State = ContainerStatusRunning
-		} else if nil != s.State.Terminated {
-			cs.State = ContainerStatusTerminated
-			cs.ExitCode = s.State.Terminated.ExitCode
-			cs.Signal = s.State.Terminated.Signal
-			cs.Reason = s.State.Terminated.Reason
-			cs.Message = s.State.Terminated.Message
-		}
-		ev.ContainerStatus[i] = cs
+	reason := string(po.Status.Phase)
+	if po.Status.Reason != "" {
+		reason = po.Status.Reason
 	}
 
+	initializing := false
+	for i := range po.Status.InitContainerStatuses {
+		container := po.Status.InitContainerStatuses[i]
+		switch {
+		case container.State.Terminated != nil && container.State.Terminated.ExitCode == 0:
+			continue
+		case container.State.Terminated != nil:
+			// initialization is failed
+			if len(container.State.Terminated.Reason) == 0 {
+				if container.State.Terminated.Signal != 0 {
+					reason = fmt.Sprintf("Init:Signal:%d", container.State.Terminated.Signal)
+				} else {
+					reason = fmt.Sprintf("Init:ExitCode:%d", container.State.Terminated.ExitCode)
+				}
+			} else {
+				reason = "Init:" + container.State.Terminated.Reason
+			}
+			initializing = true
+		case container.State.Waiting != nil && len(container.State.Waiting.Reason) > 0 && container.State.Waiting.Reason != "PodInitializing":
+			reason = "Init:" + container.State.Waiting.Reason
+			initializing = true
+		default:
+			reason = fmt.Sprintf("Init:%d/%d", i, len(po.Spec.InitContainers))
+			initializing = true
+		}
+		break
+	}
+	if !initializing {
+		for i := len(po.Status.ContainerStatuses) - 1; i >= 0; i-- {
+			container := po.Status.ContainerStatuses[i]
+			cs := ContainerStatus{
+				Name: container.Name,
+			}
+			if nil != container.State.Waiting {
+				cs.State = ContainerStatusWaiting
+				cs.Reason = container.State.Waiting.Reason
+				cs.Message = container.State.Waiting.Message
+			} else if nil != container.State.Running {
+				cs.State = ContainerStatusRunning
+			} else if nil != container.State.Terminated {
+				cs.State = ContainerStatusTerminated
+				cs.ExitCode = container.State.Terminated.ExitCode
+				cs.Signal = container.State.Terminated.Signal
+				cs.Reason = container.State.Terminated.Reason
+				cs.Message = container.State.Terminated.Message
+			}
+			ev.ContainerStatus[i] = cs
+			if container.State.Waiting != nil && container.State.Waiting.Reason != "" {
+				reason = container.State.Waiting.Reason
+			} else if container.State.Terminated != nil && container.State.Terminated.Reason != "" {
+				reason = container.State.Terminated.Reason
+			} else if container.State.Terminated != nil && container.State.Terminated.Reason == "" {
+				if container.State.Terminated.Signal != 0 {
+					reason = fmt.Sprintf("Signal:%d", container.State.Terminated.Signal)
+				} else {
+					reason = fmt.Sprintf("ExitCode:%d", container.State.Terminated.ExitCode)
+				}
+			}
+		}
+	}
+
+	if po.DeletionTimestamp != nil && po.Status.Reason == "NodeLost" {
+		reason = "Unknown"
+	} else if po.DeletionTimestamp != nil {
+		reason = "Terminating"
+	}
+
+	ev.PodStatus = reason
 	return ev
 }
 
