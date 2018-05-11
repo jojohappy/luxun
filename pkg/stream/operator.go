@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jojohappy/luxun/pkg/model"
+	"github.com/jojohappy/luxun/pkg/storage"
 )
 
 type opFunc func(en *model.Event) (*model.Event, error)
@@ -61,5 +62,12 @@ func (o *Operator) Stop() {
 }
 
 func filter(en *model.Event) (*model.Event, error) {
+	return en, nil
+}
+
+func store(en *model.Event) (*model.Event, error) {
+	if en.PodStatus != "" {
+		storage.StorageInst().AddTick(en.PodStatus)
+	}
 	return en, nil
 }

@@ -36,3 +36,7 @@
 [[constraint]]
   name = "gopkg.in/olivere/elastic.v5"
   version = "5.0.66"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  version = "v0.8.0"
