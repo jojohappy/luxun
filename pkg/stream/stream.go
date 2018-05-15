@@ -28,8 +28,12 @@ func Init() {
 	filterOp.SetInput(defaultStream.input)
 	defaultStream.ops = append(defaultStream.ops, filterOp)
 
+	storeOp := NewOperator(store)
+	storeOp.SetInput(filterOp.GetOutput())
+	defaultStream.ops = append(defaultStream.ops, storeOp)
+
 	sink := NewSink()
-	sink.SetInput(filterOp.GetOutput())
+	sink.SetInput(storeOp.GetOutput())
 	defaultStream.sink = sink
 
 	defaultStream.start()

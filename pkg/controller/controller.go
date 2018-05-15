@@ -3,9 +3,6 @@ package controller
 import (
 	"flag"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -33,19 +30,16 @@ func Execute() {
 	for name, builder := range controllerBuilders {
 		fmt.Println("starting init controller: ", name)
 		c := builder(client)
-		stopCh := make(chan struct{})
-		go c.Run(stopCh)
-		controllStopCh[name] = stopCh
+		stopChC := make(chan struct{})
+		go c.Run(stopChC)
+		controllStopCh[name] = stopChC
 		fmt.Printf("controller %s started!\n", name)
 	}
+}
 
-	sigterm := make(chan os.Signal, 1)
-	signal.Notify(sigterm, syscall.SIGTERM)
-	signal.Notify(sigterm, syscall.SIGINT)
-	<-sigterm
-
-	for name, stopCh := range controllStopCh {
-		close(stopCh)
+func Stop() {
+	for name, stopChC := range controllStopCh {
+		close(stopChC)
 		fmt.Printf("controller %s stopped!\n", name)
 	}
 }
