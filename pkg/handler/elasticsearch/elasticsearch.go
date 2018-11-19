@@ -10,7 +10,7 @@ import (
 
 	"github.com/jojohappy/luxun/pkg/util"
 
-	elastic "gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic"
 )
 
 const (
@@ -47,7 +47,8 @@ func NewElasticStorage(index string, urls ...string) (*ElasticClient, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(urls...),
 		elastic.SetHealthcheck(defaultHealthcheck),
-		elastic.SetMaxRetries(defaultMaxRetries))
+		elastic.SetMaxRetries(defaultMaxRetries),
+		elastic.SetSniff(false))
 	if nil != err {
 		return nil, err
 	}

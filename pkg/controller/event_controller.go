@@ -22,7 +22,7 @@ type EventController struct {
 }
 
 func init() {
-	RegisterController("events", NewEventController)
+	// RegisterController("events", NewEventController)
 }
 
 func NewEventController(client kubernetes.Interface) cache.Controller {
